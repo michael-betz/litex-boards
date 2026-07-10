@@ -37,11 +37,10 @@ from liteiclink.serdes.gtp_7series import GTPQuadPLL, GTP
 from litex_boards.platforms import berkeleylab_obsidian
 from litex_boards.platforms.berkeleylab_obsidian import raw_pmod_io
 
-# ---------------------------
 
+# ---------------------------
 #  Clock and reset generator
 # ---------------------------
-
 class _CRG(LiteXModule):
     def __init__(self, platform, sys_clk_freq, resets=[]):
         self.rst = Signal()
@@ -78,14 +77,15 @@ class _CRG(LiteXModule):
 
         self.idelayctrl = S7IDELAYCTRL(self.cd_idelay)
 
-# ---------------------------
 
+# ---------------------------
 #  BaseSoC
 # ---------------------------
-
 class BaseSoC(SoCCore):
     def __init__(
         self,
+        # Board revision, see https://github.com/BerkeleyLab/Obsidian
+        revision        = "1.1.0",
         sys_clk_freq    = 125e6,
         with_ethernet   = False,
         with_etherbone  = False,
@@ -100,7 +100,7 @@ class BaseSoC(SoCCore):
         **kwargs,
     ):
         self.n_serdes = 0
-        platform = berkeleylab_obsidian.Platform()
+        platform = berkeleylab_obsidian.Platform(revision=revision)
 
         # CRG, resettable over USB serial RTS signal
         resets = []
@@ -224,11 +224,10 @@ class BaseSoC(SoCCore):
 
         return serdes
 
-# ---------------------------
 
+# ---------------------------
 #  CLI examples
 # ---------------------------
-
 def main():
     from litex.build.parser import LiteXArgumentParser
 
@@ -236,6 +235,7 @@ def main():
         platform=berkeleylab_obsidian.Platform,
         description="LiteX SoC on LBL Obsidian.",
     )
+    parser.add_target_argument("--revision", default="1.1.0", choices=("1.0.0", "1.1.0"), help="Board revision.")
     parser.add_target_argument("--sys-clk-freq",   default=125e6, type=float, help="System clock frequency.")
     parser.add_target_argument("--with-ethernet",  action="store_true",       help="Enable Ethernet support.")
     parser.add_target_argument("--with-etherbone", action="store_true",       help="Enable Etherbone support.")
@@ -250,6 +250,7 @@ def main():
         parser.error("--eth-dynamic-ip cannot be used with Etherbone.")
 
     soc = BaseSoC(
+        revision       = args.revision,
         sys_clk_freq   = args.sys_clk_freq,
         with_ethernet  = args.with_ethernet,
         eth_ip         = args.eth_ip,

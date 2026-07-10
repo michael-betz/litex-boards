@@ -1,15 +1,14 @@
 #
 # This file is part of LiteX-Boards.
 #
-# Copyright (c) 2025 Michael Betz <michael@betz-engineering.ch>
+# Copyright (c) 2026 Michael Betz <michael@betz-engineering.ch>
 # SPDX-License-Identifier: BSD-2-Clause
 #
 # Obsidian A35 is a low cost FPGA carrier board with several SFP ports,
 # many PMOD IOs and Arduino shield compatibility.
-# It was developed at Berkeley Lab as a kind of smart IO extender.
+# It was developed at Berkeley Lab as a smart IO extender.
 # It facilitates interfacing ADCs, DACs, sensors, UI elements or other
 # peripherals to a central larger FPGA board or a PC.
-
 
 from litex.build.generic_platform import Subsignal, Pins, IOStandard, Misc
 from litex.build.xilinx import Xilinx7SeriesPlatform
@@ -17,28 +16,36 @@ from litex.build.openocd import OpenOCD
 
 # IOs ----------------------------------------------------------------------------------------------
 
-_io = [
-    # WR_CLK0 (125 MHz, DAC-tunable), MGTREFCLK0
+_io_common = [
+    # MGTREFCLK0
+    # R10: WR_CLK0 (125 MHz VCXO, DAC-tunable)
+    # R11: WR_CLK0, SI5340B OUT0
     (
         "clk125",
         0,
         Subsignal("p", Pins("D6")),
         Subsignal("n", Pins("D5")),
     ),
-    # CLK20_VCXO (20 MHz, DAC-tunable), PAD NOT CLOCK-CAPABLE!
+    # R10: CLK20_VCXO (20 MHz VCXO, DAC-tunable), PAD NOT CLOCK-CAPABLE!
+    # R11: CLK20_VCXO, SI5340B OUT2, PAD NOT CLOCK-CAPABLE!
     ("clk20", 0, Pins("D13"), IOStandard("LVCMOS33")),
-    # REF_CLK0 (Si5351A, channel 0 and 1, I2C-tunable, 2.5 kHz - 200 MHz), MGTREFCLK1
-    # Note: the Si5351 needs to be configured to get HCSL compatible outputs.
-    # See Section 6.7 in the datasheet and register setting CLKx_INV.
+    # MGTREFCLK1
+    # R10: REF_CLK0 (Si5351A, channel 0 and 1, I2C-tunable, 2.5 kHz - 200 MHz)
+    #   Note: the Si5351 needs to be configured to get HCSL compatible outputs.
+    #   See Section 6.7 in the datasheet and register setting CLKx_INV.
+    # R11: REF_CLK0, SI5340B OUT3
     (
         "clkmgt",
         0,
         Subsignal("p", Pins("B6")),
         Subsignal("n", Pins("B5")),
     ),
-    # CLK2 (Si5351A, channel 2, I2C-tunable, 2.5 kHz - 200 MHz)
+    # R10: CLK2 (Si5351A, channel 2, I2C-tunable, 2.5 kHz - 200 MHz)
+    # R11: CLK2, fixed XO, 25 MHz, KC2520Z25.0000C1KX00
     ("clk2", 0, Pins("E15"), IOStandard("LVCMOS33")),
     # Gigabit Ethernet transceiver (RTL8211F-CG)
+    # R10: CDCM61004RHB OSCOUT provides its 25 MHz clock
+    # R11: SI5340B OUT1 provides its 25 MHz clock
     (
         "eth",
         0,
@@ -71,21 +78,29 @@ _io = [
     # FT2232 --> FPGA. To use the RTS signal, SW2 must be ON
     ("serial_rts", 0, Pins("B10"), IOStandard("LVCMOS33")),
     # SPI Boot Flash (S25FL128SAGMFI001)
+    # use STARTUPE2 primitive to access the clock pin
     (
         "spiflash",
         0,
         Subsignal("cs_n", Pins("L15")),
-        #Subsignal("clk",  Pins("")), # Accessed through STARTUPE2.
         Subsignal("mosi", Pins("K16")),
         Subsignal("miso", Pins("L17")),
         IOStandard("LVCMOS33"),
     ),
-    # I2C system bus, connected to:
-    #   0x40: IO-extender for SFP0 and SFP1 status pins (TCA9535RTWR)
-    #   0x42: IO-extender for SFP2 and SFP3 status pins (TCA9535RTWR)
-    #   0xC0: Clock synthesizer (Si5351A)
-    #   0xA0: 256Kb I2C Serial EEPROM with Pre-Programmed Serial Number (24AA256UID)
-    #   0xE0: I2C-switch for the 4 SFP ports (PCA9546ARGV)
+    # I2C system bus, connected to (7 bit addresses):
+    # R10:
+    #   0x20: IO-extender for SFP0 and SFP1 status pins (TCA9535RTWR)
+    #   0x21: IO-extender for SFP2 and SFP3 status pins (TCA9535RTWR)
+    #   0x60: Clock synthesizer (Si5351A)
+    #   0x50: 256Kb I2C Serial EEPROM with Pre-Programmed Serial Number (24AA256UID)
+    #   0x70: I2C-switch for the 4 SFP ports (PCA9546ARGV)
+    # R11:
+    #   0x08: HUSB238, USB-PD trigger IC
+    #   0x20: TCA9535 for SFP0-1 status, board revision, LED0-1, SI5340_IRQ_N
+    #   0x21: TCA9535 for SFP2-3 status, SI5340_RSTN, 25M_CLK_DIS
+    #   0x40: INA219A Voltage and Current Monitor
+    #   0x50: 256Kb I2C Serial EEPROM with Pre-Programmed Serial Number (24AA256UID)
+    #   0x70: I2C-switch for the 4 SFP ports (PCA9546ARGV)
     (
         "i2c_fpga",
         0,
@@ -99,19 +114,6 @@ _io = [
         0,
         Subsignal("scl", Pins("J18")),
         Subsignal("sda", Pins("C12")),
-        IOStandard("LVCMOS33"),
-    ),
-    # 2x DAC for White Rabbit VCXO frequency control (DAC8550IDGK)
-    # clk and din is shared between the 2 DACs
-    # synca updates the clk125 tuning voltage
-    # syncb updates the clk20 tuning voltage
-    (
-        "wr_dac",
-        0,
-        Subsignal("clk", Pins("C11")),
-        Subsignal("din", Pins("B11")),
-        Subsignal("synca", Pins("D11")),
-        Subsignal("syncb", Pins("D10")),
         IOStandard("LVCMOS33"),
     ),
     # DDR3 DRAM chip (AS4C256M16D3)
@@ -185,20 +187,64 @@ _io = [
     ),
 ]
 
+_io_R10 = [
+    # 2x DAC for White Rabbit VCXO frequency control (DAC8550IDGK)
+    # clk and din is shared between the 2 DACs
+    # synca updates the clk125 tuning voltage
+    # syncb updates the clk20 tuning voltage
+    (
+        "wr_dac",
+        0,
+        Subsignal("clk", Pins("C11")),
+        Subsignal("din", Pins("B11")),
+        Subsignal("synca", Pins("D11")),
+        Subsignal("syncb", Pins("D10")),
+        IOStandard("LVCMOS33"),
+    ),
+]
+
+_io_R11 = [
+    # SI5340B frequency synthesizer SPI interface
+    (
+        "spi_si5340",
+        0,
+        Subsignal("mosi", Pins("D10")),
+        Subsignal("sclk", Pins("C11")),
+        Subsignal("miso", Pins("B11")),
+        Subsignal("cs_n", Pins("D11")),
+        IOStandard("LVCMOS33"),
+    )
+]
+
+
 # Connectors ---------------------------------------------------------------------------------------
 
-_connectors = [
-    ("pmoda", r"M16 N17 R18 U16 M17 N18 P18 V17"),  # J4
-    ("pmodb", r"T18 U17 U15 V14 R17 T17 V16 U14"),  # J5
-    ("pmodc", r"M15 N16 P15 K18 N14 P16 K17 L18"),  # J6
-    ("pmodd", r"J16 K15 F15 J14 J15 M14 G15 L14"),  # J7
-    ("pmode", r"U10 U9 V9 V11 V12 U12 V13 U11"),  # J14
-    ("pmodf", r"T13 T12 R13 T14 T15 P14 R16 R15"),  # J15
-    # digital Arduino host pins
-    ("arduino_d", r"G14 H16 A12 B12 C14 G17 G16 A15 C18 F18 C17 B15 B14 A14"),
+_connectors_common = [
+    # Digital Arduino host pins (D0 - D13)
+    ("arduino_d", "G14 H16 A12 B12 C14 G17 G16 A15 C18 F18 C17 B15 B14 A14"),
     # Analog capable Arduino host pins connected to XADC
     # the order is: A0_P, A0_N, A2_P, A2_N, A1_P, A1_N, A3_P, A3_N
-    ("arduino_a", r"C8 D8 A9 B9 C9 D9 A10 B10"),
+    # Analog Arduino host pins connected to XADC
+    ("arduino_a_p", "D8 D9 B9 B10"),  # A0-AD0, A1-AD8, A2-AD1, A3-AD9
+    ("arduino_a_n", "C8 C9 A9 A10"),  # all *_N pins are connected to GND
+]
+
+_connectors_R10 = [
+    ("pmoda", "M16 N17 R18 U16 M17 N18 P18 V17"),  # J4
+    ("pmodb", "T18 U17 U15 V14 R17 T17 V16 U14"),  # J5
+    ("pmodc", "M15 N16 P15 K18 N14 P16 K17 L18"),  # J6
+    ("pmodd", "J16 K15 F15 J14 J15 M14 G15 L14"),  # J7
+    ("pmode", "U10 U9 V9 V11 V12 U12 V13 U11"),  # J14
+    ("pmodf", "T13 T12 R13 T14 T15 P14 R16 R15"),  # J15
+]
+
+_connectors_R11 = [
+    ("pmoda", "V12 V13 U11 V11 T12 U12 U9 V9"),  # J4
+    ("pmodb", "U14 V14 T17 U17 V16 V17 U15 U16"),  # J5
+    ("pmodc", "P15 P16 R18 T18 R16 R17 M14 N14"),  # J6
+    ("pmodd", "J15 J16 J14 K15 K17 L18 M16 M17"),  # J7
+    ("pmode", "M15 K18 N16 P18 N18 G15 F15 N17"),  # J14
+    ("pmodf", "T13 U10 R13 T14 T15 P14 L14 R15"),  # J15
 ]
 
 
@@ -215,14 +261,21 @@ def raw_pmod_io(pmod="pmoda", iostd="LVCMOS33"):
 
 
 # Platform -----------------------------------------------------------------------------------------
-
-
 class Platform(Xilinx7SeriesPlatform):
     default_clk_name = "clk125"
     default_clk_period = 1e9 / 125e6
 
-    def __init__(self, toolchain="vivado"):
-        Xilinx7SeriesPlatform.__init__(self, "xc7a35t-csg325", _io, _connectors, toolchain=toolchain)
+    def __init__(self, revision="1.1.0", toolchain="vivado"):
+        if revision == "1.0.0":
+            io = _io_common + _io_R10
+            con = _connectors_common + _connectors_R10
+        elif revision == "1.1.0":
+            io = _io_common + _io_R11
+            con = _connectors_common + _connectors_R11
+        else:
+            raise RuntimeError("Invalid revision")
+
+        Xilinx7SeriesPlatform.__init__(self, "xc7a35t-csg325", io, con, toolchain=toolchain)
         self.toolchain.additional_commands = [
             (
                 "write_cfgmem -force -format bin -interface spix1 -size 16 -loadbit "
