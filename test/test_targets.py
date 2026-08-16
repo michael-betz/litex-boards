@@ -46,19 +46,19 @@ PLATFORM_EXCLUSIONS = {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_titanium_ti60_f225_dev_kit": {
+    "efinix_ti60_f225_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_trion_t120_bga576_dev_kit": {
+    "efinix_t120_f576_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_trion_t20_bga256_dev_kit": {
+    "efinix_t20_f256_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_trion_t20_mipi_dev_kit": {
+    "efinix_t20_mipi_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
@@ -74,7 +74,7 @@ PLATFORM_EXCLUSIONS = {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_t8f81_dev_kit": {
+    "efinix_t8_f81_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
@@ -137,19 +137,19 @@ TARGET_EXCLUSIONS = {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_titanium_ti60_f225_dev_kit": {
+    "efinix_ti60_f225_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_trion_t120_bga576_dev_kit": {
+    "efinix_t120_f576_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_trion_t20_bga256_dev_kit": {
+    "efinix_t20_f256_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_trion_t20_mipi_dev_kit": {
+    "efinix_t20_mipi_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
@@ -165,7 +165,7 @@ TARGET_EXCLUSIONS = {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
-    "efinix_t8f81_dev_kit": {
+    "efinix_t8_f81_dev_kit": {
         "category": "external_toolchain",
         "reason": "Require Efinity toolchain.",
     },
@@ -251,6 +251,30 @@ class TestTargets(unittest.TestCase):
                 result = subprocess_run_quiet(cmd)
                 if result.returncode != 0:
                     self.fail(result.stdout)
+
+    # Build a framebuffer target with native SDRAM and integrated main RAM.
+    def test_video_framebuffer_memory_backends(self):
+        configurations = {
+            "litedram"       : [],
+            "integrated_ram" : ["--integrated-main-ram-size=0x400000"],
+        }
+        for name, args in configurations.items():
+            with self.subTest(configuration=name):
+                output_dir = os.path.join("build", "test_video_framebuffer_memory_backends", name)
+                shutil.rmtree(output_dir, ignore_errors=True)
+                cmd = [
+                    sys.executable,
+                    "-m", "litex_boards.targets.digilent_nexys_video",
+                    "--cpu-type=vexriscv",
+                    "--cpu-variant=minimal",
+                    "--uart-name=stub",
+                    "--with-video-framebuffer",
+                    "--build",
+                    "--no-compile",
+                    "--output-dir", output_dir,
+                    *args,
+                ]
+                subprocess.check_call(cmd)
 
     # Build simple design for all platforms.
     def test_platforms(self):

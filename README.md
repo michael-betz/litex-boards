@@ -150,12 +150,12 @@ Some of the supported boards, see yours? Give LiteX-Boards a try!
     ├── digilent_pynq_z1
     ├── digilent_zedboard
     ├── ebaz4205
-    ├── efinix_t8f81_dev_kit
+    ├── efinix_t120_f576_dev_kit
+    ├── efinix_t20_f256_dev_kit
+    ├── efinix_t20_mipi_dev_kit
+    ├── efinix_t8_f81_dev_kit
     ├── efinix_ti375_c529_dev_kit
-    ├── efinix_titanium_ti60_f225_dev_kit
-    ├── efinix_trion_t120_bga576_dev_kit
-    ├── efinix_trion_t20_bga256_dev_kit
-    ├── efinix_trion_t20_mipi_dev_kit
+    ├── efinix_ti60_f225_dev_kit
     ├── efinix_tz170_j484_dev_kit
     ├── efinix_xyloni_dev_kit
     ├── ego1
@@ -184,6 +184,7 @@ Some of the supported boards, see yours? Give LiteX-Boards a try!
     ├── kosagi_netv2
     ├── krtkl_snickerdoodle
     ├── lambdaconcept_ecpix5
+    ├── lattice_certus_nx_versa
     ├── lattice_certuspro_nx_evn
     ├── lattice_certuspro_nx_versa
     ├── lattice_certuspro_nx_vvml
@@ -217,6 +218,7 @@ Some of the supported boards, see yours? Give LiteX-Boards a try!
     ├── microphase_a7_lite
     ├── microsoft_catapult_v3
     ├── mist
+    ├── mlk_cu07_ku15p
     ├── mlkpai_fs01_dr1v90m
     ├── mnt_rkx7
     ├── muselab_icesugar

@@ -236,6 +236,27 @@ _connectors = [
     ),
 ]
 
+# DDR Configuration --------------------------------------------------------------------------------
+
+ddr_config = {
+    "memory_type"     : "LPDDR4x",
+    "memory_density"  : "8G",
+    "clkin_sel"       : "CLKIN 0",
+    "location"        : "DDR_0",
+    "dq_width"        : 32,
+    "physical_rank"   : 1,
+    "data_width"      : 512,
+    "address_width"   : 33,
+    "id_width"        : 8,
+    "pin_swizzle"      : {
+        "CA"   : "CA[0],CA[1],CA[2],CA[3],CA[4],CA[5]",
+        "DQM0" : "DQ[3],DQ[6],DQ[4],DQ[5],DQ[0],DQ[1],DQ[7],DQ[2],DM[0]",
+        "DQM1" : "DQ[15],DQ[9],DQ[12],DQ[11],DQ[8],DQ[10],DQ[13],DQ[14],DM[1]",
+        "DQM2" : "DQ[22],DQ[17],DQ[18],DQ[19],DQ[16],DQ[20],DQ[21],DQ[23],DM[2]",
+        "DQM3" : "DQ[29],DQ[31],DQ[28],DQ[30],DQ[25],DQ[27],DQ[26],DQ[24],DM[3]",
+    },
+}
+
 # PMODS --------------------------------------------------------------------------------------------
 
 def raw_pmod_io(pmod):
@@ -283,10 +304,14 @@ class Platform(EfinixPlatform):
 
     def __init__(self, toolchain="efinity"):
         EfinixPlatform.__init__(self, "Ti375C529C4", _io, _connectors, iobank_info=_bank_info, toolchain=toolchain)
+        self.ddr_config = ddr_config
+        self.ddr_size   = 0x4000_0000 # 1GB.
 
     def create_programmer(self):
         return EfinixProgrammer(family=self.family)
 
     def do_finalize(self, fragment):
         EfinixPlatform.do_finalize(self, fragment)
-        self.add_period_constraint(self.lookup_request("clk100", loose=True), 1e9/100e6)
+        self.add_period_constraint(
+            self.lookup_request(self.default_clk_name, loose=True),
+            self.default_clk_period)

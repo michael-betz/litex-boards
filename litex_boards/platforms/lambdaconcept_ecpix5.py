@@ -115,15 +115,12 @@ _io = [
         IOStandard("LVCMOS33"),
     ),
 
-    # Sata
+    # SATA (DCU1/CH0).
     ("sata", 0,
-        Subsignal("clk_p", Pins("AF12")),
-        Subsignal("clk_n", Pins("AF13")),
         Subsignal("rx_p",  Pins("AF15")),
         Subsignal("rx_n",  Pins("AF16")),
         Subsignal("tx_p",  Pins("AD16")),
         Subsignal("tx_n",  Pins("AD17")),
-        IOStandard("LVCMOS33"),
     ),
 
     # SPIFlash

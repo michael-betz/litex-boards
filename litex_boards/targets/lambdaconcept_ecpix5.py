@@ -28,7 +28,7 @@ from liteeth.phy.ecp5rgmii import LiteEthPHYRGMII
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(LiteXModule):
-    def __init__(self, platform, sys_clk_freq):
+    def __init__(self, platform, sys_clk_freq, with_sata=False):
         self.rst        = Signal()
         self.cd_init    = ClockDomain()
         self.cd_por     = ClockDomain()
@@ -58,6 +58,16 @@ class _CRG(LiteXModule):
         pll.register_clkin(clk100, 100e6)
         pll.create_clkout(self.cd_sys2x_i, 2*sys_clk_freq)
         pll.create_clkout(self.cd_init, 25e6)
+
+        plls_locked = pll.locked
+        if with_sata:
+            # Keep SATA's fixed reference independent from the variable system clock.
+            self.cd_sata_refclk = ClockDomain(reset_less=True)
+            self.sata_pll = sata_pll = ECP5PLL()
+            sata_pll.register_clkin(clk100, 100e6)
+            sata_pll.create_clkout(self.cd_sata_refclk, 150e6)
+            plls_locked = plls_locked & sata_pll.locked
+
         self.specials += [
             Instance("ECLKSYNCB",
                 i_ECLKI = self.cd_sys2x_i.clk,
@@ -69,7 +79,7 @@ class _CRG(LiteXModule):
                 i_CLKI    = self.cd_sys2x.clk,
                 i_RST     = self.reset,
                 o_CDIVX   = self.cd_sys.clk),
-            AsyncResetSynchronizer(self.cd_sys, ~pll.locked | self.reset),
+            AsyncResetSynchronizer(self.cd_sys, ~plls_locked | self.reset),
         ]
 
 # BaseSoC ------------------------------------------------------------------------------------------
@@ -81,6 +91,7 @@ class BaseSoC(SoCCore):
         eth_ip                 = "192.168.1.50",
         remote_ip              = None,
         eth_dynamic_ip         = False,
+        with_sata              = False,
         with_video_terminal    = False,
         with_video_framebuffer = False,
         with_led_chaser        = True,
@@ -88,7 +99,7 @@ class BaseSoC(SoCCore):
         platform = lambdaconcept_ecpix5.Platform(device=device, toolchain=toolchain)
 
         # CRG --------------------------------------------------------------------------------------
-        self.crg = _CRG(platform, sys_clk_freq)
+        self.crg = _CRG(platform, sys_clk_freq, with_sata=with_sata)
 
         # SoCCore ----------------------------------------------------------------------------------
         SoCCore.__init__(self, platform, sys_clk_freq,
@@ -120,6 +131,21 @@ class BaseSoC(SoCCore):
                 self.add_etherbone(phy=self.ethphy, ip_address=eth_ip, with_ethmac=with_ethernet)
             if with_ethernet:
                 self.add_ethernet(phy=self.ethphy, dynamic_ip=eth_dynamic_ip, local_ip=eth_ip, remote_ip=remote_ip)
+
+        # SATA -------------------------------------------------------------------------------------
+        if with_sata:
+            from litesata.phy import LiteSATAPHY
+
+            self.sata_phy = LiteSATAPHY(platform.device,
+                refclk     = self.crg.cd_sata_refclk.clk,
+                pads       = platform.request("sata"),
+                gen        = "gen2",
+                clk_freq   = sys_clk_freq,
+                data_width = 16,
+                dual       = 1,
+                channel    = 0,
+            )
+            self.add_sata(phy=self.sata_phy, mode="read+write")
 
         # HDMI -------------------------------------------------------------------------------------
         if with_video_terminal or with_video_framebuffer:
@@ -234,6 +260,7 @@ def main():
     parser.add_target_argument("--device",       default="85F",            help="ECP5 device (45F or 85F).")
     parser.add_target_argument("--sys-clk-freq", default=75e6, type=float, help="System clock frequency.")
     parser.add_target_argument("--with-sdcard",  action="store_true",      help="Enable SDCard support.")
+    parser.add_target_argument("--with-sata",    action="store_true",      help="Enable SATA support.")
     ethopts = parser.target_group.add_mutually_exclusive_group()
     ethopts.add_argument("--with-ethernet",  action="store_true", help="Enable Ethernet support.")
     ethopts.add_argument("--with-etherbone", action="store_true", help="Enable Etherbone support.")
@@ -255,6 +282,7 @@ def main():
         eth_ip                 = args.eth_ip,
         remote_ip              = args.remote_ip,
         eth_dynamic_ip         = args.eth_dynamic_ip,
+        with_sata              = args.with_sata,
         with_video_terminal    = args.with_video_terminal,
         with_video_framebuffer = args.with_video_framebuffer,
         **parser.soc_argdict

@@ -16,16 +16,11 @@
 # Relies on https://github.com/lucaceresoli/zynqmp-pmufw-builder to create a generic PMU firmware;
 # first build will take a while because it includes a cross-toolchain.
 
-import os
-
 from migen import *
 
 from litex.gen import *
 
 from litex_boards.platforms import alinx_axu2cga
-
-from litex.build.tools import write_to_file
-
 
 from litex.soc.cores.clock import *
 from litex.soc.integration.soc import *
@@ -89,69 +84,21 @@ class BaseSoC(SoCCore):
                 linker = True)
             )
             self.constants["CONFIG_CLOCK_FREQUENCY"] = 1199880127
+            self.cpu.set_libxil({
+                "STDIN_BASEADDRESS"                         : "0xFF010000",
+                "STDOUT_BASEADDRESS"                        : "0xFF010000",
+                "XPAR_PSU_DDR_0_S_AXI_BASEADDR"             : "0x00000000",
+                "XPAR_PSU_DDR_0_S_AXI_HIGHADDR"             : "0x7FFFFFFF",
+                "XPAR_PSU_DDR_1_S_AXI_BASEADDR"             : "0x800000000",
+                "XPAR_PSU_DDR_1_S_AXI_HIGHADDR"             : "0x87FFFFFFF",
+                "XPAR_CPU_CORTEXA53_0_TIMESTAMP_CLK_FREQ"   : "99999005",
+            })
 
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
             self.leds = LedChaser(
                 pads         = platform.request_all("user_led"),
                 sys_clk_freq = sys_clk_freq)
-
-    def finalize(self, *args, **kwargs):
-        super(BaseSoC, self).finalize(*args, **kwargs)
-        if self.cpu_type != "zynqmp":
-            return
-
-        libxil_path = os.path.join(self.builder.software_dir, 'libxil')
-        os.makedirs(os.path.realpath(libxil_path), exist_ok=True)
-        lib = os.path.join(libxil_path, 'embeddedsw')
-        if not os.path.exists(lib):
-            os.system("git clone --depth 1 https://github.com/Xilinx/embeddedsw {}".format(lib))
-
-        os.makedirs(os.path.realpath(self.builder.include_dir), exist_ok=True)
-
-        for header in [
-            'XilinxProcessorIPLib/drivers/uartps/src/xuartps_hw.h',
-            'lib/bsp/standalone/src/common/xil_types.h',
-            'lib/bsp/standalone/src/common/xil_assert.h',
-            'lib/bsp/standalone/src/common/xil_io.h',
-            'lib/bsp/standalone/src/common/xil_printf.h',
-            'lib/bsp/standalone/src/common/xstatus.h',
-            'lib/bsp/standalone/src/common/xdebug.h',
-            'lib/bsp/standalone/src/arm/ARMv8/64bit/xpseudo_asm.h',
-            'lib/bsp/standalone/src/arm/ARMv8/64bit/xreg_cortexa53.h',
-            'lib/bsp/standalone/src/arm/ARMv8/64bit/xil_cache.h',
-            'lib/bsp/standalone/src/arm/ARMv8/64bit/xil_errata.h',
-            'lib/bsp/standalone/src/arm/ARMv8/64bit/platform/ZynqMP/xparameters_ps.h',
-            'lib/bsp/standalone/src/arm/common/xil_exception.h',
-            'lib/bsp/standalone/src/arm/common/gcc/xpseudo_asm_gcc.h',
-        ]:
-            shutil.copy(os.path.join(lib, header), self.builder.include_dir)
-
-        write_to_file(os.path.join(self.builder.include_dir, 'bspconfig.h'), """
-#ifndef BSPCONFIG_H
-#define BSPCONFIG_H
-
-#define EL3 1
-#define EL1_NONSECURE 0
-
-#endif
-""")
-        write_to_file(os.path.join(self.builder.include_dir, 'xparameters.h'), '''
-#ifndef XPARAMETERS_H
-#define XPARAMETERS_H
-
-#include "xparameters_ps.h"
-
-#define STDIN_BASEADDRESS 0xFF010000
-#define STDOUT_BASEADDRESS 0xFF010000
-#define XPAR_PSU_DDR_0_S_AXI_BASEADDR 0x00000000
-#define XPAR_PSU_DDR_0_S_AXI_HIGHADDR 0x7FFFFFFF
-#define XPAR_PSU_DDR_1_S_AXI_BASEADDR 0x800000000
-#define XPAR_PSU_DDR_1_S_AXI_HIGHADDR 0x87FFFFFFF
-#define XPAR_CPU_CORTEXA53_0_TIMESTAMP_CLK_FREQ 99999005
-
-#endif
-''')
 
 # Build --------------------------------------------------------------------------------------------
 
@@ -168,10 +115,6 @@ def main():
         **parser.soc_argdict
     )
     builder = Builder(soc, **parser.builder_argdict)
-    if args.cpu_type == "zynqmp":
-        soc.builder = builder
-        builder.add_software_package('libxil')
-        builder.add_software_library('libxil')
     if args.build:
         builder.build(**parser.toolchain_argdict)
 

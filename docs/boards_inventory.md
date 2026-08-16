@@ -43,7 +43,7 @@ python3 .github/scripts/generate_board_inventory.py --write
 | `bochenjingxin_kintex7_basec` | bochenjingxin_kintex7_basec | vivado | `125000000.0` | - | included |
 | `brisbaneSilicon_brs_100_gw1nr9` | brisbaneSilicon_brs_100_gw1nr9 | gowin | `27000000.0` | - | included |
 | `camlink_4k` | camlink_4k | trellis | `81000000.0` | - | included |
-| `colognechip_gatemate_evb` | colognechip_gatemate_evb | colognechip | `24000000.0` | SDCard, SPI SDCard, SPI Flash | included |
+| `colognechip_gatemate_evb` | colognechip_gatemate_evb | peppercorn | `24000000.0` | SDCard, SPI SDCard, SPI Flash | included |
 | `colorlight_5a_75x` | colorlight_5a_75b, colorlight_5a_75e, colorlight_i5a_907 | trellis | `60000000.0` | Ethernet, Etherbone, SPI Flash | included |
 | `colorlight_i5` | colorlight_i5 | trellis | `60000000.0` | Ethernet, Etherbone, SDCard, SPI SDCard, Video Terminal, Video Framebuffer | included |
 | `colorlight_i9plus` | colorlight_i9plus | vivado | `100000000.0` | Ethernet, Etherbone, SPI Flash | included |
@@ -64,12 +64,12 @@ python3 .github/scripts/generate_board_inventory.py --write
 | `digilent_pynq_z1` | digilent_pynq_z1 | vivado | `125000000.0` | Video Terminal | included |
 | `digilent_zedboard` | digilent_arty, digilent_zedboard | vivado | `100000000.0` | - | included |
 | `ebaz4205` | ebaz4205 | vivado | `100000000.0` | - | included |
-| `efinix_t8f81_dev_kit` | efinix_t8f81_dev_kit | efinity | `33333000.0` | - | toolchain-gated: Require Efinity toolchain. |
+| `efinix_t120_f576_dev_kit` | efinix_t120_f576_dev_kit | efinity | `75000000.0` | Ethernet, Etherbone, SPI Flash | toolchain-gated: Require Efinity toolchain. |
+| `efinix_t20_f256_dev_kit` | efinix_t20_f256_dev_kit | efinity | `45000000.0` | SPI Flash | toolchain-gated: Require Efinity toolchain. |
+| `efinix_t20_mipi_dev_kit` | efinix_t20_mipi_dev_kit | efinity | `100000000.0` | SPI Flash | toolchain-gated: Require Efinity toolchain. |
+| `efinix_t8_f81_dev_kit` | efinix_t8_f81_dev_kit | efinity | `33333000.0` | - | toolchain-gated: Require Efinity toolchain. |
 | `efinix_ti375_c529_dev_kit` | efinix_ti375_c529_dev_kit | efinity | `100000000.0` | Ethernet, Etherbone, SDCard, SPI SDCard, SPI Flash | toolchain-gated: Require Efinity toolchain. |
-| `efinix_titanium_ti60_f225_dev_kit` | efinix_titanium_ti60_f225_dev_kit | efinity | `200000000.0` | Ethernet, Etherbone, SDCard, SPI SDCard, SPI Flash | toolchain-gated: Require Efinity toolchain. |
-| `efinix_trion_t120_bga576_dev_kit` | efinix_trion_t120_bga576_dev_kit | efinity | `75000000.0` | Ethernet, Etherbone, SPI Flash | toolchain-gated: Require Efinity toolchain. |
-| `efinix_trion_t20_bga256_dev_kit` | efinix_trion_t20_bga256_dev_kit | efinity | `45000000.0` | SPI Flash | toolchain-gated: Require Efinity toolchain. |
-| `efinix_trion_t20_mipi_dev_kit` | efinix_trion_t20_mipi_dev_kit | efinity | `100000000.0` | SPI Flash | toolchain-gated: Require Efinity toolchain. |
+| `efinix_ti60_f225_dev_kit` | efinix_ti60_f225_dev_kit | efinity | `200000000.0` | Ethernet, Etherbone, SDCard, SPI SDCard, SPI Flash | toolchain-gated: Require Efinity toolchain. |
 | `efinix_tz170_j484_dev_kit` | efinix_tz170_j484_dev_kit | efinity | `100000000.0` | SDCard, SPI SDCard, SPI Flash | toolchain-gated: Require Efinity toolchain. |
 | `efinix_xyloni_dev_kit` | efinix_xyloni_dev_kit | efinity | `33333000.0` | - | toolchain-gated: Require Efinity toolchain. |
 | `ego1` | ego1 | vivado | `100000000.0` | Video Terminal | included |
@@ -93,11 +93,12 @@ python3 .github/scripts/generate_board_inventory.py --write
 | `icepi_zero` | icepi_zero | trellis | `50000000.0` | SDCard, SPI SDCard, SPI Flash, Video Terminal, Video Framebuffer | included |
 | `intergalaktik_ulx5m_gs` | intergalaktik_ulx5m_gs | colognechip | `20000000.0` | SDCard, SPI SDCard, SPI Flash | included |
 | `isx_im1283` | isx_im1283 | vivado | `80000000.0` | SDCard, SPI SDCard | included |
-| `jungle_electronics_fireant` | jungle_electronics_fireant | efinity | `33333000.0` | - | toolchain-gated: Require Efinity toolchain. |
+| `jungle_electronics_fireant` | jungle_electronics_fireant | efinity | `33330000.0` | - | toolchain-gated: Require Efinity toolchain. |
 | `kosagi_fomu` | kosagi_fomu_pvt | icestorm | `12000000.0` | - | included |
 | `kosagi_netv2` | kosagi_netv2 | vivado | `100000000.0` | Ethernet, SDCard, SPI SDCard, PCIe | included |
 | `krtkl_snickerdoodle` | krtkl_snickerdoodle | vivado | `100000000.0` | - | included |
-| `lambdaconcept_ecpix5` | lambdaconcept_ecpix5 | trellis | `75000000.0` | Ethernet, Etherbone, SDCard, Video Terminal, Video Framebuffer | included |
+| `lambdaconcept_ecpix5` | lambdaconcept_ecpix5 | trellis | `75000000.0` | Ethernet, Etherbone, SDCard, SATA, Video Terminal, Video Framebuffer | included |
+| `lattice_certus_nx_versa` | lattice_certus_nx_versa | radiant | `75000000.0` | SPI Flash | included |
 | `lattice_certuspro_nx_evn` | lattice_certuspro_nx_evn | radiant | `75000000.0` | - | included |
 | `lattice_certuspro_nx_versa` | lattice_certuspro_nx_versa | radiant | `75000000.0` | PCIe | included |
 | `lattice_certuspro_nx_vvml` | lattice_certuspro_nx_vvml | radiant | `75000000.0` | - | included |
@@ -131,6 +132,7 @@ python3 .github/scripts/generate_board_inventory.py --write
 | `microphase_a7_lite` | microphase_a7_lite | vivado | `100000000.0` | Ethernet, SDCard, SPI SDCard, SPI Flash | included |
 | `microsoft_catapult_v3` | microsoft_catapult_v3 | quartus | `100000000.0` | - | included |
 | `mist` | mist | quartus | `50000000.0` | Video Terminal | included |
+| `mlk_cu07_ku15p` | mlk_cu07_ku15p | vivado | `75000000.0` | SDCard | included |
 | `mlkpai_fs01_dr1v90m` | mlkpai_fs01_dr1v90m | td | `25000000.0` | - | included |
 | `mnt_rkx7` | mnt_rkx7 | vivado | `100000000.0` | Ethernet, Etherbone, SDCard, SPI SDCard, SPI Flash, USB Host | included |
 | `muselab_icesugar` | muselab_icesugar | icestorm | `24000000.0` | - | included |

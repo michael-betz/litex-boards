@@ -60,4 +60,6 @@ class Platform(EfinixPlatform):
 
     def do_finalize(self, fragment):
         EfinixPlatform.do_finalize(self, fragment)
-        self.add_period_constraint(self.lookup_request("clk33", loose=True), 1e9/33.33e6)
+        self.add_period_constraint(
+            self.lookup_request(self.default_clk_name, loose=True),
+            self.default_clk_period)

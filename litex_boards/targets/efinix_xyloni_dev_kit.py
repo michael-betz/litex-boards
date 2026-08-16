@@ -94,9 +94,10 @@ def main():
     parser.add_target_argument("--bios-flash-offset", default="0x40000",            help="BIOS offset in SPI Flash.")
 
     args = parser.parse_args()
+    bios_flash_offset = int(args.bios_flash_offset, 0)
 
     soc = BaseSoC(
-        bios_flash_offset = int(args.bios_flash_offset, 0),
+        bios_flash_offset = bios_flash_offset,
         sys_clk_freq      = args.sys_clk_freq,
         **parser.soc_argdict)
     builder = Builder(soc, **parser.builder_argdict)
@@ -110,7 +111,7 @@ def main():
     if args.flash:
         prog = soc.platform.create_programmer()
         prog.flash(0, builder.get_bitstream_filename(mode="flash", ext=".hex")) # FIXME
-        prog.flash(args.bios_flash_offset, builder.get_bios_filename())
+        prog.flash(bios_flash_offset, builder.get_bios_filename())
 
 if __name__ == "__main__":
     main()

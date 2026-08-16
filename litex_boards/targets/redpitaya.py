@@ -91,6 +91,12 @@ class BaseSoC(SoCCore):
             # Enable Ethernet.
             self.cpu.add_ethernet(0, "MIO 16 .. 27", "MIO 52 .. 53")
 
+            self.cpu.set_libxil({
+                "STDOUT_BASEADDRESS"            : "XPS_UART0_BASEADDR",
+                "XPAR_PS7_DDR_0_S_AXI_BASEADDR" : "0x00100000",
+                "XPAR_PS7_DDR_0_S_AXI_HIGHADDR" : "0x1FFFFFFF",
+            })
+
         # Leds -------------------------------------------------------------------------------------
         if with_led_chaser:
             self.leds = LedChaser(

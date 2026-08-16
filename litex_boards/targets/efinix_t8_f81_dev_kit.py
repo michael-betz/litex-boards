@@ -14,7 +14,7 @@ from migen import *
 from litex.gen import *
 from litex.gen.genlib.misc import WaitTimer
 
-from litex_boards.platforms import efinix_t8f81_dev_kit
+from litex_boards.platforms import efinix_t8_f81_dev_kit
 
 from litex.soc.cores.clock import *
 from litex.soc.integration.soc import *
@@ -53,7 +53,7 @@ class _CRG(LiteXModule):
 
 class BaseSoC(SoCCore):
     def __init__(self, bios_flash_offset, sys_clk_freq=33.333e6, with_led_chaser=True, **kwargs):
-        platform = efinix_t8f81_dev_kit.Platform()
+        platform = efinix_t8_f81_dev_kit.Platform()
 
         # CRG --------------------------------------------------------------------------------------
         self.crg = _CRG(platform, sys_clk_freq)
@@ -61,6 +61,9 @@ class BaseSoC(SoCCore):
         # SoCCore ----------------------------------------------------------------------------------
         # Disable Integrated ROM.
         kwargs["integrated_rom_size"]  = 0
+        # Use Crossover UART by default.
+        if kwargs.get("uart_name", "serial") == "serial":
+            kwargs["uart_name"] = "crossover"
         # Set CPU variant / reset address
         if kwargs.get("cpu_type", "vexriscv") == "vexriscv":
             kwargs["cpu_variant"] = "minimal"
@@ -89,7 +92,7 @@ class BaseSoC(SoCCore):
 
 def main():
     from litex.build.parser import LiteXArgumentParser
-    parser = LiteXArgumentParser(platform=efinix_t8f81_dev_kit.Platform, description="LiteX SoC on Efinix T8F81C Dev Kit.")
+    parser = LiteXArgumentParser(platform=efinix_t8_f81_dev_kit.Platform, description="LiteX SoC on Efinix T8F81C Dev Kit.")
     parser.add_target_argument("--flash",             action="store_true",          help="Flash bitstream.")
     parser.add_target_argument("--sys-clk-freq",      default=33.333e6, type=float, help="System clock frequency.")
     parser.add_target_argument("--bios-flash-offset", default="0x40000",            help="BIOS offset in SPI Flash.")

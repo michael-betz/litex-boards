@@ -11,15 +11,11 @@ from migen import *
 from litex.gen import *
 from litex.gen.genlib.misc import WaitTimer
 
-from litex_boards.platforms import efinix_titanium_ti60_f225_dev_kit
+from litex_boards.platforms import efinix_ti60_f225_dev_kit
 
 from litex.soc.cores.clock import *
 from litex.soc.integration.soc import *
 from litex.soc.integration.builder import *
-from litex.soc.integration.soc import SoCRegion
-from litex.soc.interconnect import wishbone
-
-from litex.soc.cores.hyperbus import HyperRAM
 
 from liteeth.phy.titaniumrgmii import LiteEthPHYRGMII
 
@@ -71,7 +67,7 @@ class BaseSoC(SoCCore):
         remote_ip      = None,
         eth_dynamic_ip = False,
         **kwargs):
-        platform = efinix_titanium_ti60_f225_dev_kit.Platform()
+        platform = efinix_ti60_f225_dev_kit.Platform()
 
         # CRG --------------------------------------------------------------------------------------
         self.crg = _CRG(platform, sys_clk_freq)
@@ -87,39 +83,20 @@ class BaseSoC(SoCCore):
 
         # HyperRAM ---------------------------------------------------------------------------------
         if with_hyperram:
-            # HyperRAM Parameters.
-            hyperram_device     = "W958D6NW"
-            hyperram_size       = 32 * MEGABYTE
-            hyperram_cache_size = 16 * KILOBYTE
-
-            # HyperRAM Bus/Slave Interface.
-            hyperram_bus = wishbone.Interface(data_width=32, address_width=32, addressing="word")
-            self.bus.add_slave(name="main_ram", slave=hyperram_bus, region=SoCRegion(origin=0x40000000, size=hyperram_size, mode="rwx"))
-
-            # HyperRAM L2 Cache.
-            hyperram_cache = wishbone.Cache(
-                cachesize = hyperram_cache_size//4,
-                master    = hyperram_bus,
-                slave     = wishbone.Interface(data_width=32, address_width=32, addressing="word")
+            self.add_hyperram(
+                region_name   = "main_ram",
+                origin        = self.mem_map["main_ram"],
+                size          = 32*MEGABYTE,
+                l2_cache_size = 16*KILOBYTE,
+                latency       = 7,
+                latency_mode  = "variable",
+                clk_ratio     = "2:1",
+                dq_i_cd       = "sys2x_ps",
             )
-            hyperram_cache = FullMemoryWE()(hyperram_cache)
-            self.hyperram_cache = hyperram_cache
-            self.add_config("L2_SIZE", hyperram_cache_size)
-
-            # HyperRAM Core.
-            self.hyperram = HyperRAM(
-                pads         = platform.request("hyperram"),
-                latency      = 7,
-                latency_mode = "variable",
-                sys_clk_freq = sys_clk_freq,
-                clk_ratio    = "2:1",
-                dq_i_cd      = "sys2x_ps",
-            )
-            self.comb += self.hyperram_cache.slave.connect(self.hyperram.bus)
 
         # Ethernet / Etherbone ---------------------------------------------------------------------
         if with_ethernet or with_etherbone:
-            platform.add_extension(efinix_titanium_ti60_f225_dev_kit.rgmii_ethernet_qse_ios("P1"))
+            platform.add_extension(efinix_ti60_f225_dev_kit.rgmii_ethernet_qse_ios("P1"))
             pads = platform.request("eth", eth_phy)
             self.ethphy = LiteEthPHYRGMII(
                 platform           = platform,
@@ -135,7 +112,7 @@ class BaseSoC(SoCCore):
 
 def main():
     from litex.build.parser import LiteXArgumentParser
-    parser = LiteXArgumentParser(platform=efinix_titanium_ti60_f225_dev_kit.Platform, description="LiteX SoC on Efinix Titanium Ti60 F225 Dev Kit.")
+    parser = LiteXArgumentParser(platform=efinix_ti60_f225_dev_kit.Platform, description="LiteX SoC on Efinix Titanium Ti60 F225 Dev Kit.")
     parser.add_target_argument("--flash",          action="store_true",       help="Flash bitstream.")
     parser.add_target_argument("--sys-clk-freq",   default=200e6, type=float, help="System clock frequency.")
     parser.add_target_argument("--with-spi-flash", action="store_true",       help="Enable memory-mapped SPI flash.")
