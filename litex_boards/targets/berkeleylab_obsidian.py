@@ -42,7 +42,12 @@ from litex_boards.platforms.berkeleylab_obsidian import raw_pmod_io
 #  Clock and reset generator
 # ---------------------------
 class _CRG(LiteXModule):
-    def __init__(self, platform, sys_clk_freq, resets=[]):
+    def __init__(self, platform, sys_clk_freq, resets=[], use_clk2=False):
+        '''
+        default clock source is clk125.
+        for rev 1.1.0, the SI5340B fuses need to be programmed first, hence
+        use fixed freq. clk2 as a fall-back system clock
+        '''
         self.rst = Signal()
         self.cd_sys = ClockDomain()
         self.cd_sys4x = ClockDomain()
@@ -52,17 +57,20 @@ class _CRG(LiteXModule):
         # # #
 
         # Transceiver clock routing. See UG482.
-        clk125 = platform.request("clk125")
-
         # GTP reference clock to be used with GTPQuadPLL
+        clk125 = platform.request("clk125")
         self.clk125_gtp = Signal()
         clk125_bufh = Signal()
-
         self.specials += Instance("IBUFDS_GTE2", i_I=clk125.p, i_IB=clk125.n, i_CEB=0, o_O=self.clk125_gtp)
         self.specials += Instance("BUFH", i_I=self.clk125_gtp, o_O=clk125_bufh)
 
+        # System clock, either clk125 or clk2
         self.pll = pll = S7MMCM(speedgrade=-2)
-        pll.register_clkin(clk125_bufh, 125e6)
+        if use_clk2:
+            clk2 = platform.request("clk2")
+            pll.register_clkin(clk2, 25e6)
+        else:
+            pll.register_clkin(clk125_bufh, 125e6)
 
         resets.append(self.rst)
         self.comb += pll.reset.eq(reduce(or_, resets))
@@ -86,6 +94,7 @@ class BaseSoC(SoCCore):
         self,
         # Board revision, see https://github.com/BerkeleyLab/Obsidian
         revision        = "1.1.0",
+        sys_clk_clk2    = False,
         sys_clk_freq    = 125e6,
         with_ethernet   = False,
         with_etherbone  = False,
@@ -106,7 +115,7 @@ class BaseSoC(SoCCore):
         resets = []
         if with_rts_reset:
             resets.append(platform.request("serial_rts"))
-        self.crg = _CRG(platform, sys_clk_freq, resets)
+        self.crg = _CRG(platform, sys_clk_freq, resets, sys_clk_clk2)
 
         SoCCore.__init__(
             self,
@@ -237,6 +246,7 @@ def main():
     )
     parser.add_target_argument("--revision", default="1.1.0", choices=("1.0.0", "1.1.0"), help="Board revision.")
     parser.add_target_argument("--sys-clk-freq",   default=125e6, type=float, help="System clock frequency.")
+    parser.add_target_argument("--sys-clk-clk2",   action="store_true",       help="Use clk2 as source for system clock.")
     parser.add_target_argument("--with-ethernet",  action="store_true",       help="Enable Ethernet support.")
     parser.add_target_argument("--with-etherbone", action="store_true",       help="Enable Etherbone support.")
     parser.add_target_argument("--eth-ip",         default="192.168.1.50",    help="Ethernet/Etherbone IP address.")

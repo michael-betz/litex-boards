@@ -266,6 +266,8 @@ class Platform(Xilinx7SeriesPlatform):
     default_clk_period = 1e9 / 125e6
 
     def __init__(self, revision="1.1.0", toolchain="vivado"):
+        self.revision = revision
+
         if revision == "1.0.0":
             io = _io_common + _io_R10
             con = _connectors_common + _connectors_R10
@@ -296,5 +298,6 @@ class Platform(Xilinx7SeriesPlatform):
 
     def do_finalize(self, fragment):
         Xilinx7SeriesPlatform.do_finalize(self, fragment)
+        self.add_period_constraint(self.lookup_request("clk2", loose=True), 1e9 / 25e6)
         self.add_period_constraint(self.lookup_request("clk20", loose=True), 1e9 / 20e6)
         self.add_period_constraint(self.lookup_request("clk125", loose=True), 1e9 / 125e6)
