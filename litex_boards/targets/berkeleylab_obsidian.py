@@ -60,9 +60,9 @@ class _CRG(LiteXModule):
         # GTP reference clock to be used with GTPQuadPLL
         clk125 = platform.request("clk125")
         self.clk125_gtp = Signal()
-        clk125_bufh = Signal()
+        self.clk125_bufh = Signal()
         self.specials += Instance("IBUFDS_GTE2", i_I=clk125.p, i_IB=clk125.n, i_CEB=0, o_O=self.clk125_gtp)
-        self.specials += Instance("BUFH", i_I=self.clk125_gtp, o_O=clk125_bufh)
+        self.specials += Instance("BUFH", i_I=self.clk125_gtp, o_O=self.clk125_bufh)
 
         # System clock, either clk125 or clk2
         self.pll = pll = S7MMCM(speedgrade=-2)
@@ -70,7 +70,7 @@ class _CRG(LiteXModule):
             clk2 = platform.request("clk2")
             pll.register_clkin(clk2, 25e6)
         else:
-            pll.register_clkin(clk125_bufh, 125e6)
+            pll.register_clkin(self.clk125_bufh, 125e6)
 
         resets.append(self.rst)
         self.comb += pll.reset.eq(reduce(or_, resets))
@@ -98,7 +98,7 @@ class BaseSoC(SoCCore):
         sys_clk_freq    = 125e6,
         with_ethernet   = False,
         with_etherbone  = False,
-        eth_ip          = "192.168.1.50",
+        eth_ip          = None,
         remote_ip       = None,
         eth_dynamic_ip  = True,
         with_rts_reset  = False,

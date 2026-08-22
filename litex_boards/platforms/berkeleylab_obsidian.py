@@ -209,7 +209,7 @@ _io_R11 = [
         "spi_si5340",
         0,
         Subsignal("mosi", Pins("D10")),
-        Subsignal("sclk", Pins("C11")),
+        Subsignal("clk", Pins("C11")),
         Subsignal("miso", Pins("B11")),
         Subsignal("cs_n", Pins("D11")),
         IOStandard("LVCMOS33"),
