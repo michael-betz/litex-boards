@@ -48,6 +48,13 @@ class _CRG(LiteXModule):
         for rev 1.1.0, the SI5340B fuses need to be programmed first, hence
         use fixed freq. clk2 as a fall-back system clock
         '''
+        # # TODO: Add clocking-mode support
+        #   * Fail-safe: Everything runs from CLK20. No transceiver or ethernet support
+        #   * Default: SI initial config. 125 MHz for f_sys and transceiver, 25 MHz for GbE. No init block needed.
+        #   * Custom: Uses the Si5340 module to load a custom configuration into the SI chip on startup.
+        # In any case:
+        #     --> Need to assert the resets of all CDs (except CLK20) while the SI chip locks somehow.
+
         self.rst = Signal()
         self.cd_sys = ClockDomain()
         self.cd_sys4x = ClockDomain()
