@@ -32,41 +32,52 @@ from litepcie.software import generate_litepcie_software
 # CRG ----------------------------------------------------------------------------------------------
 
 class _CRG(LiteXModule):
-    def __init__(self, platform, sys_clk_freq):
+    def __init__(self, platform, sys_clk_freq, with_video=False):
         self.rst          = Signal()
         self.cd_sys       = ClockDomain()
         self.cd_sys4x     = ClockDomain()
         self.cd_sys4x_dqs = ClockDomain()
         self.cd_idelay    = ClockDomain()
-        self.cd_hdmi      = ClockDomain()
 
         # # #
 
-        # Clk.
+        # Clks.
+        clk24  = platform.request("clk24")
         clk100 = platform.request("clk100")
-        platform.add_platform_command("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets clk100_IBUF]")
-        platform.add_platform_command("set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets s7pll0_clkin]")
 
-        # Main PLL.
-        self.pll = pll = S7PLL(speedgrade=-1)
-        self.comb += pll.reset.eq(self.rst)
-        pll.register_clkin(clk100, 100e6)
-        pll.create_clkout(self.cd_sys, sys_clk_freq)
-        pll.create_clkout(self.cd_sys4x,     4*sys_clk_freq)
-        pll.create_clkout(self.cd_sys4x_dqs, 4*sys_clk_freq, phase=90)
-        pll.create_clkout(self.cd_idelay,    200e6, margin=1e-1)   # FIXME: Re-arrange clocking.
-        pll.create_clkout(self.cd_hdmi,      148.5e6, margin=2e-2) # FIXME: Use a second PLL or move to clkout0 that has fractional support.
-        platform.add_false_path_constraints(self.cd_sys.clk, pll.clkin) # Ignore sys_clk to pll.clkin path created by SoC's rst.
+        # Main MMCM.
+        # The 24MHz input allows exact 148.5/594MHz video and DDR3 clocks.
+        self.mmcm = mmcm = S7MMCM(speedgrade=-1)
+        self.comb += mmcm.reset.eq(self.rst)
+        mmcm.register_clkin(clk24, 24e6)
+        mmcm.create_clkout(self.cd_sys, sys_clk_freq)
+        mmcm.create_clkout(self.cd_sys4x,     4*sys_clk_freq)
+        mmcm.create_clkout(self.cd_sys4x_dqs, 4*sys_clk_freq, phase=90)
+        if with_video:
+            self.cd_hdmi = ClockDomain()
+            mmcm.create_clkout(self.cd_hdmi, 148.5e6, margin=0)
+        # Ignore sys_clk to mmcm.clkin path created by SoC's reset.
+        platform.add_false_path_constraints(self.cd_sys.clk, mmcm.clkin)
+
+        # Auxiliary PLL.
+        # Generate exact IDELAY and SATA reference clocks from the 100MHz input.
+        self.aux_pll = aux_pll = S7PLL(speedgrade=-1)
+        self.comb += aux_pll.reset.eq(self.rst)
+        aux_pll.register_clkin(clk100, 100e6)
+        aux_pll.create_clkout(self.cd_idelay,       200e6, margin=0)
+        self.cd_sata_refclk = ClockDomain()
+        aux_pll.create_clkout(self.cd_sata_refclk, 150e6, margin=0)
+        platform.add_false_path_constraints(self.cd_sys.clk, aux_pll.clkin)
+        platform.add_platform_command(
+            "set aux_pll_clkin [get_nets -quiet {{{clkin}}}]\n"
+            "if {{[llength $aux_pll_clkin]}} {{\n"
+            "    set_property CLOCK_DEDICATED_ROUTE FALSE $aux_pll_clkin\n"
+            "}}",
+            clkin=aux_pll.clkin
+        )
 
         # IDELAY Ctrl.
         self.idelayctrl = S7IDELAYCTRL(self.cd_idelay)
-
-        # SATA PLL.
-        self.cd_sata_refclk = ClockDomain()
-        self.sata_pll = sata_pll = S7PLL(speedgrade=-1)
-        self.comb += sata_pll.reset.eq(self.rst)
-        sata_pll.register_clkin(clk100, 100e6)
-        sata_pll.create_clkout(self.cd_sata_refclk, 150e6)
 
 # BaseSoC ------------------------------------------------------------------------------------------
 
@@ -82,7 +93,8 @@ class BaseSoC(SoCMini):
         platform = decklink_mini_4k.Platform()
 
         # CRG --------------------------------------------------------------------------------------
-        self.crg = _CRG(platform, sys_clk_freq)
+        self.crg = _CRG(platform, sys_clk_freq,
+            with_video = with_video_terminal or with_video_framebuffer)
 
         # SoCCore ----------------------------------------------------------------------------------
         if kwargs.get("uart_name", "serial") == "serial":

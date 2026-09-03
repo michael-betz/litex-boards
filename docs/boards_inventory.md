@@ -23,6 +23,7 @@ python3 .github/scripts/generate_board_inventory.py --write
 | `aliexpress_xc7k70t` | aliexpress_xc7k70t | vivado | `90000000.0` | Ethernet, PCIe, Video Terminal, Video Framebuffer, Video Colorbars | included |
 | `alinx_ax7010` | alinx_ax7010 | - | `100000000.0` | - | included |
 | `alinx_ax7020` | alinx_ax7020 | - | `100000000.0` | - | included |
+| `alinx_ax7035` | alinx_ax7035 | - | `50000000.0` | Ethernet, SDCard, SPI Flash, Video Terminal, Video Framebuffer | included |
 | `alinx_ax7203` | alinx_ax7203 | - | `50000000.0` | PCIe, Video Framebuffer | included |
 | `alinx_axau15` | alinx_axau15 | vivado | `125000000.0` | Ethernet, Etherbone, SDCard, PCIe | included |
 | `alinx_axu2cga` | alinx_axu2cga | vivado | `25000000.0` | - | included |
@@ -131,6 +132,7 @@ python3 .github/scripts/generate_board_inventory.py --write
 | `micronova_mercury2` | micronova_mercury2 | vivado | `50000000.0` | - | included |
 | `microphase_a7_lite` | microphase_a7_lite | vivado | `100000000.0` | Ethernet, SDCard, SPI SDCard, SPI Flash | included |
 | `microsoft_catapult_v3` | microsoft_catapult_v3 | quartus | `100000000.0` | - | included |
+| `microsoft_storey_peak` | microsoft_storey_peak | quartus | `100000000.0` | - | included |
 | `mist` | mist | quartus | `50000000.0` | Video Terminal | included |
 | `mlk_cu07_ku15p` | mlk_cu07_ku15p | vivado | `75000000.0` | SDCard | included |
 | `mlkpai_fs01_dr1v90m` | mlkpai_fs01_dr1v90m | td | `25000000.0` | - | included |
